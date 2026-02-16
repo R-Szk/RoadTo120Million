@@ -59,4 +59,5 @@ dependencies {
 
     implementation("com.patrykandpatrick.vico:compose:1.13.0") // Chart
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 }

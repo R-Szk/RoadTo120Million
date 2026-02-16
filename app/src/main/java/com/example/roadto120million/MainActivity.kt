@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.roadto120million.ui.theme.RoadTo120MillionTheme
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -45,9 +46,6 @@ import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
 import com.patrykandpatrick.vico.core.axis.AxisPosition
 import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
-import com.patrykandpatrick.vico.core.entry.ChartEntryModel
-import com.patrykandpatrick.vico.core.entry.entryModelOf
-import com.patrykandpatrick.vico.core.entry.entryOf
 
 enum class ChartRange {
     ALL, TEN_YEARS
@@ -60,7 +58,6 @@ class MainActivity : ComponentActivity() {
             RoadTo120MillionTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     AssetCalculationView(
-                        name = "Android",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -124,20 +121,16 @@ fun calculateAssetProgression(
 }
 
 @Composable
-fun AssetCalculationView(name: String, modifier: Modifier = Modifier) {
-    var nowAssets by rememberSaveable { mutableStateOf("") }
-    var monthlyReserve by rememberSaveable { mutableStateOf("") }
-    var annualRatePercent by rememberSaveable { mutableStateOf("") }
-    var resultText by rememberSaveable { mutableStateOf("0") }
+fun AssetCalculationView(
+    modifier: Modifier = Modifier,
+    viewModel: AssetViewModel = viewModel()
+) {
     val startAge = 28
-
-    var selectedRange by remember { mutableStateOf(ChartRange.ALL) }
-    var fullProgression by remember { mutableStateOf<List<Double>>(emptyList()) }
 
     val commonCornerSize = 12.dp    // Cardパーツやボタンなどのコーナー角を共通にする
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
@@ -151,54 +144,46 @@ fun AssetCalculationView(name: String, modifier: Modifier = Modifier) {
         )
 
         Card (
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             shape = RoundedCornerShape(commonCornerSize)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                CalculationInputField("現在の資産", nowAssets, unit = "円", onValueChange = {nowAssets = it})
-                CalculationInputField("毎月の積立額", monthlyReserve, unit = "円", onValueChange = {monthlyReserve = it})
-                CalculationInputField("年利", annualRatePercent, unit = "%", onValueChange = {annualRatePercent = it})
+            Column(modifier = modifier.padding(16.dp)) {
+                CalculationInputField("現在の資産", viewModel.nowAssets, unit = "円", onValueChange = {viewModel.nowAssets = it})
+                CalculationInputField("毎月の積立額", viewModel.monthlyReserve, unit = "円", onValueChange = {viewModel.monthlyReserve = it})
+                CalculationInputField("年利", viewModel.annualRatePercent, unit = "%", onValueChange = {viewModel.annualRatePercent = it})
             }
         }
 
         Button(
-            onClick = {
-                val assets = nowAssets.toDoubleOrNull() ?: 0.0
-                val reserve = monthlyReserve.toDoubleOrNull() ?: 0.0
-                val rate = annualRatePercent.toDoubleOrNull() ?: 0.0
-
-                val progression = calculateAssetProgression(startAge, assets, reserve, rate)
-
-                fullProgression = progression
-            },
+            onClick = { viewModel.onCalculate(startAge)},
             contentPadding = PaddingValues(
                 start = 20.dp,
                 top = 12.dp,
                 end = 20.dp,
                 bottom = 12.dp
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             shape = RoundedCornerShape(commonCornerSize)
         ) {
             Text("計算する")
         }
 
-        Row(modifier = Modifier.fillMaxWidth(),
+        Row(modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center) {
             Button(
-                onClick = { selectedRange = ChartRange.ALL },
-                enabled = selectedRange != ChartRange.ALL,
+                onClick = { viewModel.onRangeChanged(ChartRange.ALL) },
+                enabled = viewModel.selectedRange != ChartRange.ALL,
                 shape = RoundedCornerShape(commonCornerSize)
             ) {
                 Text("全期間")
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = modifier.width(8.dp))
 
             Button(
-                onClick = { selectedRange = ChartRange.TEN_YEARS },
-                enabled = selectedRange != ChartRange.TEN_YEARS,
+                onClick = { viewModel.onRangeChanged(ChartRange.TEN_YEARS) },
+                enabled = viewModel.selectedRange != ChartRange.TEN_YEARS,
                 shape = RoundedCornerShape(commonCornerSize)
             ) {
                 Text("10年間")
@@ -212,27 +197,15 @@ fun AssetCalculationView(name: String, modifier: Modifier = Modifier) {
             "%,.0f百万".format(y / 1_000_000)
         }
 
-        val displayEntries: ChartEntryModel? = if (fullProgression.isNotEmpty()) {
-            val dataToShow = when (selectedRange) {
-                ChartRange.ALL -> fullProgression
-                ChartRange.TEN_YEARS -> fullProgression.take(11)    // 0年目~10年目
-            }
-
-            entryModelOf(
-                dataToShow.mapIndexed { index, d ->
-                    entryOf(index.toFloat(), d.toFloat())
-                }
-            )
-        } else null
-
-        if (displayEntries != null) {
+        val model = viewModel.chartEntryModel
+        if (model != null) {
             Chart(
                 chart = lineChart(),
-                model = displayEntries,
+                model = model,
                 startAxis = rememberStartAxis(valueFormatter = startAxisValueFormatter),
                 bottomAxis = rememberBottomAxis(valueFormatter = bottomAxisValueFormatter),
 
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
                     .height(250.dp)
                     .padding(top = 16.dp)
@@ -245,6 +218,6 @@ fun AssetCalculationView(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     RoadTo120MillionTheme {
-        AssetCalculationView("Android")
+        AssetCalculationView(viewModel = viewModel())
     }
 }
