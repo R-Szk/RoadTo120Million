@@ -43,6 +43,8 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
 
         fullProgression = calculateAssetProgression(startAge, assets, reserve, rate)
 
+        updateChartModel()
+
         viewModelScope.launch {
             repository.saveSettings(nowAssets, monthlyReserve, annualRatePercent, startAgeString)
         }
