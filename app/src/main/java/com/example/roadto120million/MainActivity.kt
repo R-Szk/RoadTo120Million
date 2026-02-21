@@ -54,7 +54,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val repository = AssetRepository(applicationContext)
         setContent {
+            val viewModel: AssetViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T: androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                        return AssetViewModel(repository) as T
+                    }
+                }
+            )
+
             RoadTo120MillionTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     AssetCalculationView(
@@ -218,6 +228,7 @@ fun AssetCalculationView(
 @Composable
 fun GreetingPreview() {
     RoadTo120MillionTheme {
+//        AssetCalculationView("Android")
         AssetCalculationView(viewModel = viewModel())
     }
 }

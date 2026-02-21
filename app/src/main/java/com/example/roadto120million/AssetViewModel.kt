@@ -4,11 +4,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 import com.patrykandpatrick.vico.core.entry.entryOf
+import kotlinx.coroutines.launch
 
-class AssetViewModel: ViewModel() {
+class AssetViewModel(private val repository: AssetRepository): ViewModel() {
+
     var nowAssets by mutableStateOf("")
     var monthlyReserve by mutableStateOf("")
     var annualRatePercent by mutableStateOf("")
@@ -21,6 +24,12 @@ class AssetViewModel: ViewModel() {
     // UIが表示に使うモデル
     var chartEntryModel by mutableStateOf<ChartEntryModel?>(null)
 
+    init {
+        // アプリ起動時にDataStoreから値を読み込む
+        viewModelScope.launch { repository.nowAssetsFlow.collect { nowAssets = it } }
+        viewModelScope.launch { repository.monthlyReserveFlow.collect { monthlyReserve = it } }
+        viewModelScope.launch { repository.annualRateFlow.collect { annualRatePercent = it } }
+    }
 
     // ロジック:計算ボタンがタップされた時の処理
     fun onCalculate(startAge: Int) {
@@ -29,6 +38,11 @@ class AssetViewModel: ViewModel() {
         val rate = annualRatePercent.toDoubleOrNull() ?: 0.0
 
         fullProgression = calculateAssetProgression(startAge, assets, reserve, rate)
+
+        viewModelScope.launch {
+            repository.saveSettings(nowAssets, monthlyReserve, annualRatePercent)
+        }
+
     }
 
     // 10年表示か全期間表示が切り替わった時の処理
