@@ -95,7 +95,12 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.Settings.name) {
                             SettingsView(
                                 viewModel = viewModel,
-                                onBack = { navController.popBackStack() }
+                                onBack = {
+                                    if (navController.previousBackStackEntry != null) {
+                                        viewModel.onCalculate()
+                                        navController.popBackStack()
+                                    }
+                                }
                             )
                         }
                     }
@@ -216,7 +221,7 @@ fun AssetCalculationView(
         }
 
         Button(
-            onClick = { viewModel.onCalculate(startAge)},
+            onClick = { viewModel.onCalculate()},
             contentPadding = PaddingValues(
                 start = 20.dp,
                 top = 12.dp,

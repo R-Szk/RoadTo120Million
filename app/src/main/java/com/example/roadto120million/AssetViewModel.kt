@@ -35,7 +35,7 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
     }
 
     // ロジック:計算ボタンがタップされた時の処理
-    fun onCalculate(startAge: Int) {
+    fun onCalculate() {
         val assets = nowAssets.toDoubleOrNull() ?: 0.0
         val reserve = monthlyReserve.toDoubleOrNull() ?: 0.0
         val rate = annualRatePercent.toDoubleOrNull() ?: 0.0
