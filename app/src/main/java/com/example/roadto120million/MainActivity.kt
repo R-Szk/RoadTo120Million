@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,10 +37,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.roadto120million.ui.theme.RoadTo120MillionTheme
+import com.example.roadto120million.ui.theme.SettingsView
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
@@ -50,6 +56,12 @@ import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
 enum class ChartRange {
     ALL, TEN_YEARS
 }
+
+enum class Screen {
+    Calculator,
+    Settings
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,11 +78,34 @@ class MainActivity : ComponentActivity() {
             )
 
             RoadTo120MillionTheme {
+                val navController = rememberNavController()
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AssetCalculationView(
+                    NavHost(
+                        navController = navController,
+                        startDestination = Screen.Calculator.name,
                         modifier = Modifier.padding(innerPadding)
-                    )
+                    ) {
+                        composable(Screen.Calculator.name) {
+                            AssetCalculationView(
+                                viewModel = viewModel,
+                                onNavigateToSettings = { navController.navigate(Screen.Settings.name) }
+                            )
+                        }
+                        composable(Screen.Settings.name) {
+                            SettingsView(
+                                viewModel = viewModel,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                    }
                 }
+
+//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+//                    AssetCalculationView(
+//                        modifier = Modifier.padding(innerPadding)
+//                    )
+//                }
             }
         }
     }
@@ -133,9 +168,10 @@ fun calculateAssetProgression(
 @Composable
 fun AssetCalculationView(
     modifier: Modifier = Modifier,
-    viewModel: AssetViewModel = viewModel()
+    viewModel: AssetViewModel = viewModel(),
+    onNavigateToSettings: () -> Unit = {}
 ) {
-    val startAge = 28
+    val startAge = viewModel.startAgeString.toIntOrNull() ?: 20
 
     val commonCornerSize = 12.dp    // Cardパーツやボタンなどのコーナー角を共通にする
 
@@ -147,11 +183,25 @@ fun AssetCalculationView(
             .statusBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "シミュレーション設定",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "シミュレーション設定",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            // 設定ボタン
+            androidx.compose.material3.IconButton(onClick = onNavigateToSettings) {
+                androidx.compose.material3.Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Settings,
+                    contentDescription = "設定"
+                )
+            }
+        }
 
         Card (
             modifier = modifier.fillMaxWidth(),
@@ -229,6 +279,6 @@ fun AssetCalculationView(
 fun GreetingPreview() {
     RoadTo120MillionTheme {
 //        AssetCalculationView("Android")
-        AssetCalculationView(viewModel = viewModel())
+        AssetCalculationView(viewModel = viewModel(), onNavigateToSettings = {})
     }
 }

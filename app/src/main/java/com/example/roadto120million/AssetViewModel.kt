@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -16,6 +17,7 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
     var monthlyReserve by mutableStateOf("")
     var annualRatePercent by mutableStateOf("")
     var resultText by mutableStateOf("0")
+    var startAgeString by mutableStateOf("20")
     var selectedRange by mutableStateOf(ChartRange.ALL)
 
     // 計算済みの全データを保持する
@@ -29,6 +31,7 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
         viewModelScope.launch { repository.nowAssetsFlow.collect { nowAssets = it } }
         viewModelScope.launch { repository.monthlyReserveFlow.collect { monthlyReserve = it } }
         viewModelScope.launch { repository.annualRateFlow.collect { annualRatePercent = it } }
+        viewModelScope.launch { repository.startAgeFlow.collect { startAgeString = it } }
     }
 
     // ロジック:計算ボタンがタップされた時の処理
@@ -36,11 +39,12 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
         val assets = nowAssets.toDoubleOrNull() ?: 0.0
         val reserve = monthlyReserve.toDoubleOrNull() ?: 0.0
         val rate = annualRatePercent.toDoubleOrNull() ?: 0.0
+        val startAge = startAgeString.toIntOrNull() ?: 20
 
         fullProgression = calculateAssetProgression(startAge, assets, reserve, rate)
 
         viewModelScope.launch {
-            repository.saveSettings(nowAssets, monthlyReserve, annualRatePercent)
+            repository.saveSettings(nowAssets, monthlyReserve, annualRatePercent, startAgeString)
         }
 
     }
