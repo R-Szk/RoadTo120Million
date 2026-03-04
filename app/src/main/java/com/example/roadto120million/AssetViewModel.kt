@@ -84,24 +84,42 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
         var isValid = true
 
         // 現在の資産のチェック
-        if (nowAssets.toDoubleOrNull() == null || nowAssets.isBlank()) {
+        if (nowAssets.isBlank()) {
+            nowAssetsError = "入力してください"
+            isValid = false
+        } else if (nowAssets.toDoubleOrNull() == null) {
             nowAssetsError = "有効な数値を入力してください"
+            isValid = false
+        } else if (nowAssets.isBlank()) {
+            nowAssetsError = "入力してください"
             isValid = false
         } else {
             nowAssetsError = null
         }
 
         // 積立額のチェック
-        if (monthlyReserve.toDoubleOrNull() == null || monthlyReserve.isBlank()) {
+        if (monthlyReserve.isBlank()) {
+            monthlyReserveError = "入力してください"
+            isValid = false
+        } else if (monthlyReserve.toDoubleOrNull() == null) {
             monthlyReserveError = "有効な数値を入力してください"
+            isValid = false
+        } else if (monthlyReserve.toDouble() < 0) {
+            monthlyReserveError = "0円以上を入力してください"
             isValid = false
         } else {
             monthlyReserveError = null
         }
 
         // 年利のチェック
-        if (annualRatePercent.toDoubleOrNull() == null || annualRatePercent.isBlank()) {
+        if (annualRatePercent.isBlank()) {
+            annualRatePercentError = "入力してください"
+            isValid = false
+        } else if (annualRatePercent.toDoubleOrNull() == null) {
             annualRatePercentError = "有効な数値を入力してください"
+            isValid = false
+        } else if (annualRatePercent.toDouble() < 0) {
+            annualRatePercentError = "0%以上を入力してください"
             isValid = false
         } else {
             annualRatePercentError = null
