@@ -20,6 +20,12 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
     var startAgeString by mutableStateOf("20")
     var selectedRange by mutableStateOf(ChartRange.ALL)
 
+    // 各項目のエラーメッセージを保持する
+    var nowAssetsError by mutableStateOf<String?>(null)
+    var monthlyReserveError by mutableStateOf<String?>(null)
+    var annualRatePercentError by mutableStateOf<String?>(null)
+    var startAgeError by mutableStateOf<String?>(null)
+
     // 計算済みの全データを保持する
     private var fullProgression: List<Double> = emptyList()
 
@@ -36,9 +42,11 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
 
     // ロジック:計算ボタンがタップされた時の処理
     fun onCalculate() {
-        val assets = nowAssets.toDoubleOrNull() ?: 0.0
-        val reserve = monthlyReserve.toDoubleOrNull() ?: 0.0
-        val rate = annualRatePercent.toDoubleOrNull() ?: 0.0
+        if (!validateInputs()) return
+
+        val assets = nowAssets.toDouble()
+        val reserve = monthlyReserve.toDouble()
+        val rate = annualRatePercent.toDouble()
         val startAge = startAgeString.toIntOrNull() ?: 20
 
         fullProgression = calculateAssetProgression(startAge, assets, reserve, rate)
@@ -70,6 +78,36 @@ class AssetViewModel(private val repository: AssetRepository): ViewModel() {
                 entryOf(index.toFloat(), d.toFloat())
             }
         )
+    }
+
+    fun validateInputs(): Boolean {
+        var isValid = true
+
+        // 現在の資産のチェック
+        if (nowAssets.toDoubleOrNull() == null || nowAssets.isBlank()) {
+            nowAssetsError = "有効な数値を入力してください"
+            isValid = false
+        } else {
+            nowAssetsError = null
+        }
+
+        // 積立額のチェック
+        if (monthlyReserve.toDoubleOrNull() == null || monthlyReserve.isBlank()) {
+            monthlyReserveError = "有効な数値を入力してください"
+            isValid = false
+        } else {
+            monthlyReserveError = null
+        }
+
+        // 年利のチェック
+        if (annualRatePercent.toDoubleOrNull() == null || annualRatePercent.isBlank()) {
+            annualRatePercentError = "有効な数値を入力してください"
+            isValid = false
+        } else {
+            annualRatePercentError = null
+        }
+
+        return isValid
     }
 
 }
