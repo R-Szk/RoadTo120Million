@@ -105,12 +105,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-
-//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                    AssetCalculationView(
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
-//                }
             }
         }
     }
