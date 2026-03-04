@@ -115,6 +115,8 @@ fun CalculationInputField(
     label: String,
     value: String,
     unit: String = "",
+    isError: Boolean = false,
+    errorMessage: String? = null,
     onValueChange: (String) -> Unit
 ){
     Row(
@@ -131,6 +133,13 @@ fun CalculationInputField(
             onValueChange = onValueChange,
             modifier = Modifier.weight(2f),
             suffix = { Text(unit)},
+            isError = isError,
+            supportingText = {
+                // エラーがあるときだけメッセージを表示
+                if (isError && errorMessage != null) {
+                    Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+                }
+            },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Decimal
             ),
@@ -208,9 +217,9 @@ fun AssetCalculationView(
             shape = RoundedCornerShape(commonCornerSize)
         ) {
             Column(modifier = modifier.padding(16.dp)) {
-                CalculationInputField("現在の資産", viewModel.nowAssets, unit = "円", onValueChange = {viewModel.nowAssets = it})
-                CalculationInputField("毎月の積立額", viewModel.monthlyReserve, unit = "円", onValueChange = {viewModel.monthlyReserve = it})
-                CalculationInputField("年利", viewModel.annualRatePercent, unit = "%", onValueChange = {viewModel.annualRatePercent = it})
+                CalculationInputField("現在の資産", viewModel.nowAssets, unit = "円", isError = viewModel.nowAssetsError != null, errorMessage = viewModel.nowAssetsError, onValueChange = {viewModel.nowAssets = it})
+                CalculationInputField("毎月の積立額", viewModel.monthlyReserve, unit = "円", isError = viewModel.monthlyReserveError != null, errorMessage = viewModel.monthlyReserveError, onValueChange = {viewModel.monthlyReserve = it})
+                CalculationInputField("年利", viewModel.annualRatePercent, unit = "%", isError  = viewModel.annualRatePercentError != null, errorMessage = viewModel.annualRatePercentError, onValueChange = {viewModel.annualRatePercent = it})
             }
         }
 
